@@ -1,4 +1,4 @@
-import { findFreeSlots } from './availability';
+import { findFreeSlots, isSlotFree } from './availability';
 import { DEFAULT_CACHE_CONFIG } from './cache/cacheConfig';
 import { QueryCache } from './cache/queryCache';
 import type { NotificationChannel } from './notifications/channel';
@@ -69,7 +69,7 @@ export class ReservationManager {
       if (existing.status !== 'confirmed') {
         continue;
       }
-      if (this.hasConflict(existing.start, existing.end, request.start, request.end)) {
+      if (!isSlotFree(request.start, request.end, existing.start, existing.end)) {
         throw new BookingError(
           `room ${room.id} is already booked from ${this.formatClock(existing.start)} to ${this.formatClock(existing.end)}`,
         );
@@ -155,21 +155,6 @@ export class ReservationManager {
       discounted = Math.round(discounted * EVENING_MULTIPLIER);
     }
     return discounted;
-  }
-
-  private hasConflict(
-    existingStart: number,
-    existingEnd: number,
-    requestedStart: number,
-    requestedEnd: number,
-  ): boolean {
-    if (requestedEnd <= existingStart) {
-      return false;
-    }
-    if (requestedStart >= existingEnd) {
-      return false;
-    }
-    return true;
   }
 
   /** Customer facing receipt for one booking. */
